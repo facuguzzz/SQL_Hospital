@@ -1,0 +1,63 @@
+================================================================================
+SECCIÓN: MANEJO DE FECHAS Y CONSULTAS
+================================================================================
+
+Pregunta: ¿Cómo saber el formato de DATE de mi sesión y escribir condicionales correctamente?
+Respuesta: Puedes consultar la configuración con DBCC USEROPTIONS o @@LANGUAGE, pero la mejor práctica es usar el formato ISO 8601 que es seguro e independiente del idioma/configuración.
+- Ver formato actual de tu sesión:
+  DBCC USEROPTIONS;                       -- Ver propiedad 'dateformat' (ej: dmy, mdy, ymd)
+  SELECT SESSIONPROPERTY('DATEFORMAT');   -- Muestra el orden actual (ej: dmy)
+- Regla de oro para condicionales (Formato universal ISO sin guiones):
+  * Usar 'YYYYMMDD' (ej: '20260901') -> Funciona SIEMPRE sin importar el idioma o configuración.
+- Ejemplos de condicionales seguros:
+  * Comparación directa  : WHERE Fecha >= '20260101' AND Fecha <= '20261231'
+  * Uso de funciones     : WHERE YEAR(Fecha) = 2026 AND MONTH(Fecha) = 9
+  * Conversión explícita : WHERE Fecha = CONVERT(DATE, '01/09/2026', 103) -- 103 = dd/mm/yyyy
+
+Pregunta: ¿Si la sesión dice dateformat mdy, cómo debo interpretar y escribir las fechas?
+Respuesta: mdy significa Mes/Día/Año (Month/Day/Year). El primer número se interpreta como el mes y el segundo como el día.
+- Interpretación de texto a fecha en mdy:
+  * '09/01/2026' -> 1 de Septiembre de 2026 (Mes 09, Día 01).
+  * '12/25/2026' -> 25 de Diciembre de 2026 (Mes 12, Día 25).
+  * '25/12/2026' -> ERROR (el valor 25 no es un mes válido).
+- Ejemplos de uso:
+  -- Opción con formato mdy:
+  SELECT * FROM Ventas WHERE FechaVenta = '09/01/2026';
+  -- Opción ISO universal (recomendada siempre):
+  SELECT * FROM Ventas WHERE FechaVenta = '20260901';
+
+Pregunta: ¿Se puede definir el formato de fecha (ej: dmy) directamente en la definición de la tabla (CREATE TABLE)?
+Respuesta: NO. En SQL Server los tipos de datos DATE o DATETIME se almacenan en binario y NO tienen formato visual asociado en la tabla. El formato es una propiedad de la sesión o de la consulta.
+- Alternativas para trabajar con dmy:
+  * Cambiar el formato en la sesión:
+    SET DATEFORMAT dmy;
+  * Usar columna calculada si necesitas ver la fecha en formato texto dd/mm/yyyy:
+    CREATE TABLE Ventas (
+        FechaVenta DATE,
+        FechaTexto AS CONVERT(VARCHAR(10), FechaVenta, 103) -- Estilo 103 = dd/mm/yyyy
+    );
+  * Formatear en el SELECT:
+    SELECT FORMAT(FechaVenta, 'dd/MM/yyyy') FROM Ventas;
+
+Pregunta: ¿Hay diferencia si al insertar o comparar fechas uso barra (/) o guion (-)?
+Respuesta: SÍ. SQL Server no los trata exactamente igual y el comportamiento varía según el tipo de dato y la configuración de la sesión.
+- Con Barras (/):
+  * Depende 100% del DATEFORMAT de la sesión. '01/09/2026' se interpreta como dmy o mdy según la sesión.
+- Con Guiones (-):
+  * Si usas 'YYYY-MM-DD' en campos DATE o DATETIME2, SQL Server lo reconoce automáticamente como ISO (Año-Mes-Día).
+  * Ojo: En el tipo antiguo DATETIME, 'YYYY-MM-DD' puede cambiar si la sesión está en mdy.
+- Recomendación definitiva:
+  * Usar el formato ISO sin separadores 'YYYYMMDD' (ej: '20260901') que nunca falla con ningún tipo ni configuración.
+
+Pregunta: ¿Cuando escribo una fecha con guiones (-), los días o meses menores a 10 llevan un cero adelante (0x) o solo el número (x)?
+Respuesta: SQL Server acepta AMBAS formas si usas separadores (guiones o barras), pero la BUENA PRÁCTICA es poner siempre el cero inicial.
+- Con separadores (guiones o barras):
+  * '2026-09-05' -> Válido (Formato ISO estándar estricto YYYY-MM-DD).
+  * '2026-9-5'   -> Válido también (SQL Server es flexible y lo entiende).
+- ADVERTENCIA importante si usas formato sin separadores (YYYYMMDD):
+  * '20260905' -> Funciona perfectamente (8 caracteres obligatorios).
+  * '202695'   -> DA ERROR (SQL Server exige los 8 caracteres y no sabe si es el mes 9 o 95).
+
+
+
+

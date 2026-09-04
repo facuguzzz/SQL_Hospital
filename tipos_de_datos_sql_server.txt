@@ -1,0 +1,263 @@
+================================================================================
+                    TIPOS DE DATOS EN MICROSOFT SQL SERVER
+================================================================================
+
+Guía completa y estructurada de todos los tipos de datos soportados por Microsoft
+SQL Server, organizados por categorías, con sus rangos, almacenamiento en disco y
+mejores prácticas de uso.
+
+--------------------------------------------------------------------------------
+1. NUMÉRICOS EXACTOS (Exact Numerics)
+--------------------------------------------------------------------------------
+Permiten almacenar valores numéricos enteros o decimales con precisión exacta
+(sin redondeos por punto flotante).
+
+- bit
+  * Rango / Valores : 0, 1 o NULL
+  * Almacenamiento  : 1 byte (optimizado: hasta 8 columnas bit se agrupan en 1 byte)
+  * Descripción     : Usado para valores booleanos (verdadero/falso).
+
+- tinyint
+  * Rango / Valores : 0 a 255
+  * Almacenamiento  : 1 byte
+  * Descripción     : Entero sin signo muy pequeño. Ideal para estados o meses.
+
+- smallint
+  * Rango / Valores : -32,768 a 32,767
+  * Almacenamiento  : 2 bytes
+  * Descripción     : Entero corto con signo.
+
+- int
+  * Rango / Valores : -2,147,483,648 a 2,147,483,647
+  * Almacenamiento  : 4 bytes
+  * Descripción     : Entero estándar. El más común para claves primarias enteras.
+
+- bigint
+  * Rango / Valores : -9,223,372,036,854,775,808 a 9,223,372,036,854,775,807
+  * Almacenamiento  : 8 bytes
+  * Descripción     : Entero de gran tamaño. Recomendado para secuencias gigantes.
+
+- decimal(p, s) / numeric(p, s)
+  * Rango / Valores : -10^38 + 1 a 10^38 - 1 (p: precisión 1-38, s: escala 0-p)
+  * Almacenamiento  : 5 a 17 bytes (según la precisión p)
+  * Descripción     : Precisión y escala fijas. decimal y numeric son funcionalmente
+                      idénticos. Ideal para cálculos financieros exactos.
+
+- smallmoney
+  * Rango / Valores : -214,748.3648 a 214,748.3647
+  * Almacenamiento  : 4 bytes
+  * Descripción     : Valores monetarios pequeños. Precisión fija de 4 decimales.
+
+- money
+  * Rango / Valores : -922,337,203,685,477.5808 a 922,337,203,685,477.5807
+  * Almacenamiento  : 8 bytes
+  * Descripción     : Valores monetarios grandes. Precisión fija de 4 decimales.
+
+
+--------------------------------------------------------------------------------
+2. NUMÉRICOS APROXIMADOS (Approximate Numerics)
+--------------------------------------------------------------------------------
+Almacenan datos numéricos continuos de punto flotante. Tienen alta capacidad de
+rango pero pueden presentar imprecisiones de redondeo.
+
+- float(n)
+  * Rango / Valores : -1.79E + 308 a 1.79E + 308 (n determina la precisión: 1-53)
+  * Almacenamiento  : 4 bytes (si n <= 24), 8 bytes (si n >= 25)
+  * Descripción     : De manera predeterminada n = 53 (8 bytes).
+
+- real
+  * Rango / Valores : -3.40E + 38 a 3.40E + 38
+  * Almacenamiento  : 4 bytes
+  * Descripción     : Sinónimo de float(24). Punto flotante de precisión simple.
+
+[NOTA]: No utilices float o real para claves primarias o montos de dinero, ya que
+los comparadores de igualdad (=) pueden fallar por imprecisión de redondeo binario.
+
+
+--------------------------------------------------------------------------------
+3. FECHA Y HORA (Date and Time)
+--------------------------------------------------------------------------------
+Tipos para manejar fechas, horas o combinaciones de ambas con distintas
+precisiones y zonas horarias.
+
+- date
+  * Rango / Valores : 0001-01-01 a 9999-12-31 (Solo Fecha)
+  * Almacenamiento  : 3 bytes
+  * Descripción     : Formato YYYY-MM-DD. Recomendado si no se requiere la hora.
+
+- time(n)
+  * Rango / Valores : 00:00:00.0000000 a 23:59:59.9999999 (Solo Hora)
+  * Almacenamiento  : 3 a 5 bytes (según precisión n: 0-7)
+  * Descripción     : Formato hh:mm:ss[.nnnnnnn]. Predeterminado n = 7.
+
+- smalldatetime
+  * Rango / Valores : 1900-01-01 a 2079-06-06 (Precisión de 1 minuto)
+  * Almacenamiento  : 4 bytes
+  * Descripción     : Formato YYYY-MM-DD hh:mm:ss. Redondea los segundos.
+
+- datetime
+  * Rango / Valores : 1753-01-01 a 9999-12-31 (Precisión de 3.33 ms)
+  * Almacenamiento  : 8 bytes
+  * Descripción     : Tipo clásico. Su precisión de tiempo es aproximada.
+
+- datetime2(n)
+  * Rango / Valores : 0001-01-01 a 9999-12-31 (Precisión de 100 ns)
+  * Almacenamiento  : 6 a 8 bytes
+  * Descripción     : RECOMENDADO por Microsoft en reemplazo de datetime. Más
+                      preciso y ocupa menos espacio.
+
+- datetimeoffset(n)
+  * Rango / Valores : 0001-01-01 a 9999-12-31 con huso horario (+HH:MM / -HH:MM)
+  * Almacenamiento  : 8 a 10 bytes
+  * Descripción     : Incluye la diferencia respecto a UTC. Esencial para apps globales.
+
+
+--------------------------------------------------------------------------------
+4. CADENAS DE CARACTERES NO UNICODE (ASCII / ANSI)
+--------------------------------------------------------------------------------
+Almacenan datos de texto utilizando la codificación de la intercalación (collation)
+de la base de datos (generalmente 1 byte por carácter).
+
+- char(n)
+  * Longitud Máxima : Hasta 8,000 caracteres
+  * Almacenamiento  : n bytes (fijo)
+  * Descripción     : Longitud fija. Rellena con espacios a la derecha si es menor a n.
+
+- varchar(n)
+  * Longitud Máxima : Hasta 8,000 caracteres
+  * Almacenamiento  : Longitud real + 2 bytes
+  * Descripción     : Longitud variable. Almacena solo los caracteres ingresados.
+
+- varchar(max)
+  * Longitud Máxima : Hasta 2 GB (2,147,483,647 caracteres)
+  * Almacenamiento  : Longitud real + 2 bytes (o puntero a LOB)
+  * Descripción     : Reemplazo moderno para el tipo text.
+
+- text [DEPRECIADO]
+  * Longitud Máxima : Hasta 2 GB
+  * Almacenamiento  : Punteros a LOB
+  * Descripción     : NO USAR. Sustituir siempre por varchar(max).
+
+
+--------------------------------------------------------------------------------
+5. CADENAS DE CARACTERES UNICODE (UTF-16)
+--------------------------------------------------------------------------------
+Almacenan datos multilenguaje (Unicode). Cada carácter utiliza 2 bytes (o 4 bytes).
+
+- nchar(n)
+  * Longitud Máxima : Hasta 4,000 caracteres
+  * Almacenamiento  : n * 2 bytes (fijo)
+  * Descripción     : Longitud fija Unicode.
+
+- nvarchar(n)
+  * Longitud Máxima : Hasta 4,000 caracteres
+  * Almacenamiento  : (Longitud real * 2) + 2 bytes
+  * Descripción     : Longitud variable Unicode. Usado para nombres multilenguaje.
+
+- nvarchar(max)
+  * Longitud Máxima : Hasta 2 GB (1,073,741,823 caracteres)
+  * Almacenamiento  : Longitud real + 2 bytes
+  * Descripción     : Reemplazo moderno para ntext. Permite almacenar XML/JSON grandes.
+
+- ntext [DEPRECIADO]
+  * Longitud Máxima : Hasta 2 GB
+  * Almacenamiento  : Punteros a LOB
+  * Descripción     : NO USAR. Sustituir siempre por nvarchar(max).
+
+
+--------------------------------------------------------------------------------
+6. CADENAS BINARIAS (Binary Strings)
+--------------------------------------------------------------------------------
+Almacenan secuencias de bytes crudos (imágenes, archivos, hashes, buffers).
+
+- binary(n)
+  * Longitud Máxima : Hasta 8,000 bytes
+  * Almacenamiento  : n bytes (fijo)
+  * Descripción     : Datos binarios de longitud fija.
+
+- varbinary(n)
+  * Longitud Máxima : Hasta 8,000 bytes
+  * Almacenamiento  : Longitud real + 2 bytes
+  * Descripción     : Datos binarios de longitud variable.
+
+- varbinary(max)
+  * Longitud Máxima : Hasta 2 GB
+  * Almacenamiento  : Longitud real + 2 bytes
+  * Descripción     : Reemplazo moderno para image. Compatible con FILESTREAM.
+
+- image [DEPRECIADO]
+  * Longitud Máxima : Hasta 2 GB
+  * Almacenamiento  : Punteros a LOB
+  * Descripción     : NO USAR. Sustituir siempre por varbinary(max).
+
+
+--------------------------------------------------------------------------------
+7. TIPOS ESPACIALES (Spatial Data Types)
+--------------------------------------------------------------------------------
+Permiten representar información geográfica o geométrica.
+
+- geometry
+  * Descripción : Tipo de datos espacial plano (euclidiano / 2D).
+  * Uso         : Planos de edificios, mapas vectoriales en superficie plana.
+
+- geography
+  * Descripción : Tipo de datos espacial elipsoidal (tierra redonda).
+  * Uso         : Coordenadas GPS (Latitud/Longitud), cálculo de distancias reales.
+
+
+--------------------------------------------------------------------------------
+8. OTROS TIPOS DE DATOS ESPECIALES
+--------------------------------------------------------------------------------
+
+- uniqueidentifier
+  * Tamaño      : 16 bytes
+  * Descripción : Almacena un identificador único global (GUID).
+
+- xml
+  * Tamaño      : Hasta 2 GB
+  * Descripción : Almacena datos en formato XML. Permite validación XSD e índices.
+
+- json
+  * Tamaño      : Variable
+  * Descripción : Tipo nativo en versiones recientes (SQL Server 2024 / Azure SQL).
+                  En versiones anteriores se maneja con nvarchar(max).
+
+- vector
+  * Tamaño      : Variable
+  * Descripción : Tipo de datos nativo para búsquedas vectoriales y embeddings de IA.
+
+- sql_variant
+  * Tamaño      : Hasta 8,016 bytes
+  * Descripción : Almacena valores de varios tipos de datos admitidos por SQL Server.
+
+- hierarchyid
+  * Tamaño      : Variable
+  * Descripción : Tipo optimizado para representar nodos en estructuras jerárquicas.
+
+- rowversion / timestamp
+  * Tamaño      : 8 bytes
+  * Descripción : Genera números binarios únicos para control de concurrencia.
+                  Nota: No almacena fecha ni hora.
+
+- table
+  * Tamaño      : Variable (en tempdb)
+  * Descripción : Utilizado para almacenar un conjunto de filas temporalmente.
+
+- cursor
+  * Tamaño      : N/A
+  * Descripción : Referencia a objetos de cursor en T-SQL (no usable en columnas).
+
+
+--------------------------------------------------------------------------------
+MEJORES PRÁCTICAS DE SELECCIÓN DE TIPOS DE DATOS
+--------------------------------------------------------------------------------
+1. Claves Primarias Enteras : Usa int para la mayoría de tablas. Usa bigint solo si
+                              anticipas más de 2,147 millones de registros.
+2. Fechas                   : Usa datetime2 en vez de datetime (más preciso y menor espacio).
+                              Usa date si no necesitas guardar la hora.
+3. Cadenas de Texto         : Usa varchar para ASCII/un idioma. Usa nvarchar para
+                              soporte internacional / Unicode.
+4. Evita Tipos Depreciados  : No uses text, ntext ni image. Usa varchar(max),
+                              nvarchar(max) y varbinary(max).
+5. Cálculos Financieros     : Usa siempre decimal(p, s) o numeric(p, s). Evita float/real.
+================================================================================

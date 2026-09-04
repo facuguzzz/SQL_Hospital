@@ -1,0 +1,127 @@
+================================================================================
+SECCIÓN: CLAVES Y DISEÑO DE TABLAS
+================================================================================
+
+Pregunta: ¿Qué hace el IDENTITY para las claves primarias en SQL Server?
+Respuesta: Propiedad que genera automáticamente un número correlativo (autoincrementable) en cada nuevo INSERT para la clave primaria.
+- Sintaxis: IDENTITY(semilla, incremento)
+- Ejemplo:
+  CREATE TABLE Clientes (
+      IdCliente INT IDENTITY(1,1) PRIMARY KEY,
+      Nombre VARCHAR(50)
+  );
+
+Pregunta: ¿Qué hace el CONSTRAINT?
+Respuesta: Define reglas en las columnas para asegurar la validez e integridad de los datos (rechaza la operación si no se cumple la regla).
+- Tipos principales:
+  * PRIMARY KEY : Identificador único (no NULL).
+  * FOREIGN KEY : Relación e integridad referencial con otra tabla.
+  * UNIQUE      : Evita valores duplicados en la columna.
+  * CHECK       : Valida una condición (ej: Edad >= 18).
+  * DEFAULT     : Asigna valor por defecto si no se envía uno.
+  * NOT NULL    : Obliga a que la columna tenga valor.
+- Ejemplo:
+  ALTER TABLE Empleados ADD CONSTRAINT CK_Edad CHECK (Edad >= 18);
+
+Pregunta: ¿Si no especifico NULL o NOT NULL al definir una columna, acepta NULL por defecto?
+Respuesta: Sí, por defecto en SQL Server las columnas aceptan NULL (salvo que sea PRIMARY KEY).
+- Comportamiento por defecto:
+  * Sin especificar : Nombre VARCHAR(50) -> Acepta NULL por defecto.
+  * Excepción       : Si es PRIMARY KEY, se fuerza automáticamente a NOT NULL.
+- Buena práctica: Se recomienda escribir explícitamente NULL o NOT NULL para evitar ambigüedades.
+- Ejemplo:
+  CREATE TABLE Ejemplo (
+      Id INT PRIMARY KEY,          -- Es NOT NULL automático
+      Nombre VARCHAR(50),          -- Acepta NULL por defecto
+      Email VARCHAR(100) NOT NULL  -- Obligatorio (explícito)
+  );
+
+Pregunta: ¿Cómo modificar un atributo/columna de una tabla existente en SQL Server?
+Respuesta: Se utiliza la instrucción ALTER TABLE combinada con ALTER COLUMN o ADD CONSTRAINT.
+- Casos comunes:
+  * Cambiar tipo, longitud o nulo:
+    ALTER TABLE Tabla ALTER COLUMN Columna NuevoTipo [NULL|NOT NULL];
+  * Agregar una regla/restricción (DEFAULT, CHECK, FK, etc.):
+    ALTER TABLE Tabla ADD CONSTRAINT NombreConstraint REGLA;
+  * Renombrar la columna:
+    EXEC sp_rename 'Tabla.ColumnaVieja', 'ColumnaNueva', 'COLUMN';
+- Ejemplo:
+  ALTER TABLE Clientes ALTER COLUMN Email VARCHAR(100) NOT NULL;
+  ALTER TABLE Clientes ADD CONSTRAINT DF_Estado DEFAULT 'Activo' FOR Estado;
+
+Pregunta: ¿Se pueden hacer varias modificaciones a la vez en un solo ALTER TABLE?
+Respuesta: Depende de la modificación. En SQL Server SÍ puedes agregar o eliminar múltiples columnas/constraints separados por coma en una sola instrucción, pero NO se pueden combinar múltiples ALTER COLUMN en una misma sentencia.
+- Permitido (múltiples ADD separados por coma):
+  ALTER TABLE Clientes
+  ADD Direccion VARCHAR(100),
+      Telefono VARCHAR(20),
+      CONSTRAINT CK_Edad CHECK (Edad >= 18);
+- No permitido (múltiples ALTER COLUMN en una sola línea):
+  -- Requiere sentencias ALTER TABLE separadas:
+  ALTER TABLE Clientes ALTER COLUMN Col1 INT NOT NULL;
+  ALTER TABLE Clientes ALTER COLUMN Col2 VARCHAR(50) NULL;
+
+Pregunta: ¿Cómo saber la longitud/largo de un VARCHAR para hacer una restricción CHECK?
+Respuesta: Se utiliza la función LEN(columna) para evaluar la cantidad de caracteres de la cadena dentro de la condición de la restricción CHECK.
+- Funciones de longitud:
+  * LEN(cadena)        : Devuelve número de caracteres (sin contar espacios finales).
+  * DATALENGTH(cadena) : Devuelve tamaño en bytes (cuenta espacios finales).
+- Ejemplos de CHECK de longitud:
+  -- Mínimo de caracteres (ej: contraseña de al menos 8 caracteres):
+  ALTER TABLE Usuarios ADD CONSTRAINT CK_Pass_Largo CHECK (LEN(Password) >= 8);
+  -- Largo exacto (ej: DNI de 8 caracteres):
+  ALTER TABLE Personas ADD CONSTRAINT CK_DNI_Largo CHECK (LEN(DNI) = 8);
+
+Pregunta: ¿Existe una forma en un constraint de definir un UNIQUE para una combinación de dos atributos?
+Respuesta: SÍ. Se llama Restricción Única Compuesta (Composite Unique Constraint). Garantiza que la "combinación" de ambas columnas no se repita en la tabla, aunque los valores por separado sí puedan repetirse en otras filas.
+- Sintaxis en ALTER TABLE:
+  ALTER TABLE NombreTabla ADD CONSTRAINT UQ_NombreConstraint UNIQUE (Col1, Col2);
+- Ejemplo práctico:
+  -- Evitar que una persona se registre dos veces en el mismo evento:
+  ALTER TABLE Inscripciones 
+  ADD CONSTRAINT UQ_Persona_Evento UNIQUE (IdPersona, IdEvento);
+- Sintaxis al crear la tabla:
+  CREATE TABLE Inscripciones (
+      IdPersona INT,
+      IdEvento INT,
+      CONSTRAINT UQ_Persona_Evento UNIQUE (IdPersona, IdEvento)
+  );
+
+Pregunta: ¿Cómo puedo modificar el nombre de un constraint ya existente?
+Respuesta: En SQL Server, la forma más rápida y directa es usar el procedimiento almacenado del sistema "sp_rename", ya que ALTER TABLE no permite renombrar constraints directamente.
+- Usando sp_rename (Forma recomendada):
+  EXEC sp_rename 'NombreViejoConstraint', 'NombreNuevoConstraint', 'OBJECT';
+- Ejemplo práctico:
+  EXEC sp_rename 'CK_Edad_Antiguo', 'CK_Edad_Actualizado', 'OBJECT';
+- Alternativa (Borrar y Recrear):
+  ALTER TABLE MiTabla DROP CONSTRAINT NombreViejoConstraint;
+  ALTER TABLE MiTabla ADD CONSTRAINT NombreNuevoConstraint CHECK (Edad >= 18);
+
+Pregunta: ¿Cómo puedo ver la lista de constraints (restricciones) de una tabla?
+Respuesta: La forma más rápida y fácil en SQL Server es usando el procedimiento del sistema "sp_helpconstraint".
+- Opción 1: sp_helpconstraint (Más rápido y legible)
+  EXEC sp_helpconstraint 'NombreDeLaTabla';
+  -- Devuelve una lista con el tipo de constraint, su nombre y la regla (o columnas) que afecta.
+- Opción 2: Vistas del sistema (Útil para buscar o filtrar por código)
+  SELECT CONSTRAINT_NAME, CONSTRAINT_TYPE 
+  FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
+  WHERE TABLE_NAME = 'NombreDeLaTabla';
+
+Pregunta: ¿Cómo se llama (o qué nombre se le pone) a un constraint de una Foreign Key en una tabla intermedia?
+Respuesta: Por convención estándar, se usa el prefijo "FK_" seguido del nombre de la tabla actual (la intermedia) y luego el nombre de la tabla a la que hace referencia.
+- Estructura de nomenclatura recomendada:
+  FK_TablaIntermedia_TablaPadre
+- Ejemplo (Tabla intermedia "Inscripciones" que une "Alumnos" y "Cursos"):
+  1. Constraint hacia Alumnos : FK_Inscripciones_Alumnos
+  2. Constraint hacia Cursos  : FK_Inscripciones_Cursos
+- Sintaxis aplicada:
+  ALTER TABLE Inscripciones 
+  ADD CONSTRAINT FK_Inscripciones_Alumnos FOREIGN KEY (IdAlumno) REFERENCES Alumnos(IdAlumno);
+
+
+
+
+
+
+
+
