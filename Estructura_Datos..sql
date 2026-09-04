@@ -31,6 +31,7 @@ GO
 ALTER TABLE Medico
 ADD CONSTRAINT pk_medico 
 PRIMARY KEY (id_medico)
+GO
 
 CREATE TABLE Obra_Social (
 	id_obra INT IDENTITY,
@@ -87,6 +88,7 @@ CREATE TABLE Paciente (
 		FOREIGN KEY (id_obra)
 		REFERENCES Obra_Social (id_obra)
 )
+GO
 
 CREATE TABLE Enfermero (
 	id_enfermero INT IDENTITY(1,1), 
@@ -96,6 +98,7 @@ CREATE TABLE Enfermero (
 	CONSTRAINT pk_enfermero
 		PRIMARY KEY (id_enfermero)
 )
+GO
 
 CREATE TABLE Habitacion (
 	id_habitacion INT IDENTITY(1,1),
@@ -113,6 +116,7 @@ CREATE TABLE Habitacion (
 	CONSTRAINT pk_habitacion
 		PRIMARY KEY (id_habitacion)
 )
+GO
 
 CREATE TABLE Enfermero_asignado (
 	id_enfermero INT NOT NULL,
@@ -126,6 +130,7 @@ CREATE TABLE Enfermero_asignado (
 	CONSTRAINT unq_enfermero_asignado
 		UNIQUE (id_enfermero, id_habitacion)
 )	
+GO
 
 CREATE TABLE Receta (
 	id_receta INT IDENTITY(1,1),
@@ -142,6 +147,7 @@ CREATE TABLE Receta (
 		FOREIGN KEY (id_medico)
 		REFERENCES Medico (id_medico)
 )
+GO
 
 EXEC sp_rename 'fk_paciente','fk_receta_paciente','OBJECT'
 GO
@@ -159,6 +165,7 @@ CREATE TABLE Medicamento (
 	CONSTRAINT chk_medicamento_miligramos
 		CHECK (miligramos >= 0)
 )
+GO
 
 CREATE TABLE Receta_Detalle (
 	id_receta INT NOT NULL,
@@ -173,6 +180,7 @@ CREATE TABLE Receta_Detalle (
 		FOREIGN KEY (id_medicamento)
 		REFERENCEs Medicamento (id_medicamento)
 )
+GO
 
 EXEC sp_rename 'fk_receta', 'fk_recetaDetalle_receta', 'OBJECT'
 GO
@@ -198,10 +206,12 @@ CREATE TABLE Turno (
 		FOREIGN KEY (id_medico)
 		REFERENCES Medico (id_medico)
 )
+GO
 
 ALTER TABLE Turno
 ADD CONSTRAINT chk_turno_fecha 
 CHECK (fecha_hora >= '2026-09-01')
+GO
 
 
 CREATE TABLE Registro_Clinico (
@@ -211,7 +221,7 @@ CREATE TABLE Registro_Clinico (
 	tratamiento VARCHAR(200),
 	observaciones VARCHAR(200),
 	id_paciente INT NOT NULL,
-	id_medico INT NOT NULL
+	id_medico INT NOT NULL,
 	CONSTRAINT pk_registroClinico
 		PRIMARY KEY (id_registroClinico),
 	CONSTRAINT fk_registroClinico_paciente
@@ -223,6 +233,7 @@ CREATE TABLE Registro_Clinico (
 	CONSTRAINT chk_registroClinico_fechaHora
 		CHECK (fecha_hora >= '2026-09-01')
 )
+GO
 
 CREATE TABLE Cirujia (
 	id_cirujia INT IDENTITY(1,1),
@@ -243,6 +254,7 @@ CREATE TABLE Cirujia (
 		FOREIGN KEY (id_paciente)
 		REFERENCES Paciente (id_paciente)
 )
+GO
 
 CREATE TABLE Internacion (
 	id_internacion INT IDENTITY(1,1),
@@ -260,3 +272,4 @@ CREATE TABLE Internacion (
 		FOREIGN KEY (id_habitacion)
 		REFERENCES Habitacion (id_habitacion)
 )
+GO

@@ -34,15 +34,20 @@ GO
 ALTER TABLE Medico
 ADD CONSTRAINT unq_nombre_apellido_telefono
 UNIQUE (nombre, apellido, telefono)
+GO
 
 ALTER TABLE Medico
 ADD CONSTRAINT unq_matricula 
 UNIQUE (matricula)
+GO
 
 EXEC sp_helpconstraint 'Medico';
+GO
 
 EXEC sp_rename 'unq_matricula', 'unq_medico_matricula', 'OBJECT'
+GO
 EXEC sp_rename 'unq_nombre_apellido_telefono', 'unq_medico_nombre_apellido_telefono', 'OBJECT'
+GO
 
 
 
@@ -66,6 +71,7 @@ GO
 
 ALTER TABLE Obra_Social
 ADD CONSTRAINT unq_nombre UNIQUE (nombre)
+GO
 
 
 
@@ -88,8 +94,11 @@ GO
 
 ALTER TABLE Enfermedad
 ADD CONSTRAINT unq_nombre UNIQUE (nombre)
+GO
 
 
 SELECT SESSIONPROPERTY('DATEFORMAT') as FormatoActual
+GO
 
 DBCC USEROPTIONS
+GO
