@@ -273,3 +273,33 @@ CREATE TABLE Internacion (
 		REFERENCES Habitacion (id_habitacion)
 )
 GO
+
+CREATE TABLE Consultorio (
+	id_consultorio INT IDENTITY,
+	piso SMALLINT,
+	numero SMALLINT,
+	tipo_consulta VARCHAR(100),
+	CONSTRAINT pk_consultorio
+		PRIMARY KEY (id_consultorio),
+	CONSTRAINT chk_consultorio_piso
+		CHECK (piso >= 0),
+	CONSTRAINT chk_consultorio_numero
+		CHECK (numero >= 0),
+	CONSTRAINT unq_pisonumero
+		UNIQUE (piso, numero)
+)
+ALTER TABLE Consultorio 
+DROP CONSTRAINT unq_consultorio_pisonumero;
+
+ALTER TABLE Consultorio
+ALTER COLUMN piso SMALLINT NOT NULL;
+GO
+ALTER TABLE Consultorio
+ALTER COLUMN numero SMALLINT NOT NULL;
+GO
+
+ALTER TABLE Consultorio 
+ADD CONSTRAINT unq_consultorio_pisonumero
+UNIQUE (piso, numero)
+GO
+

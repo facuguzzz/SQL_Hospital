@@ -118,6 +118,19 @@ Respuesta: Por convención estándar, se usa el prefijo "FK_" seguido del nombre
   ALTER TABLE Inscripciones 
   ADD CONSTRAINT FK_Inscripciones_Alumnos FOREIGN KEY (IdAlumno) REFERENCES Alumnos(IdAlumno);
 
+Pregunta: ¿Cómo añado una columna a una tabla ya creada?
+Respuesta: Se utiliza la instrucción ALTER TABLE con la cláusula ADD especificando el nombre de la columna y su tipo de dato.
+- Sintaxis básica:
+  ALTER TABLE NombreTabla ADD NombreColumna TipoDeDato [NULL | NOT NULL];
+- Ejemplos:
+  -- Agregar columna que permite nulos:
+  ALTER TABLE Clientes ADD Telefono VARCHAR(20) NULL;
+  -- Agregar columna obligatoria con valor por defecto:
+  ALTER TABLE Clientes ADD Activo BIT NOT NULL DEFAULT 1;
+  -- Agregar múltiples columnas a la vez:
+  ALTER TABLE Clientes ADD Direccion VARCHAR(100) NULL, Ciudad VARCHAR(50) NULL;
+
+
 
 
 
